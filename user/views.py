@@ -361,10 +361,13 @@ def crawlRate(request):
         try:
             crawlPages = models.Crawl.objects.filter(k_id=k_id)
             json['resultCode'] = '10001'
-            json['resultDesc'] = ''
+            json['resultDesc'] = '操作成功'
+            json['data'] = len(crawlPages)
         except:
             json['resultCode'] = '30000'
             json['resultDesc'] = '服务器故障'
+
+    return JsonResponse(json)
 
 #调用阅读理解模块
 from legalReadFunc import *
