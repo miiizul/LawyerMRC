@@ -30,5 +30,6 @@ urlpatterns = [
     path('user/updatePwd', userView.updatePwd),
     path('user/updateInfo', userView.updateInfo),
     path('user/crawl', userView.crawl),
-    path('user/mrc', userView.readcomprehend)
+    path('user/readcomprehend', userView.readcomprehend),
+    path('user/getRKW', userView.recommendkeyword)
 ]
