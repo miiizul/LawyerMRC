@@ -5,6 +5,9 @@ from django.shortcuts import HttpResponse
 from django.http.response import JsonResponse
 from user import models
 
+global crawlSp
+global crawlFp
+
 # Create your views here.
 def register(request):
     print('进入接口register')
@@ -257,8 +260,10 @@ def crawl(request):
                 url = "https://www.itslaw.com/search?searchMode=judgements&sortType=1&conditions=searchWord%2B%E6%B3%95%E5%BE%8B%2B1%2B%E6%B3%95%E5%BE%8B&searchView=text"
                 driver.get(url)
                 # 点击登录
-                o = 0
-                p = 0
+
+                crawlSp = 0
+                crawlFp = 0
+
                 while 1:
                     try:
                         driver.find_element_by_class_name("login-btn").click()
@@ -327,10 +332,10 @@ def crawl(request):
                                 f.write('\n')
                                 f.close()
                                 print("成功")
-                                o = o + 1
+                                crawlSp = crawlSp + 1
                             except:
                                 print("失败")
-                                p = p + 1
+                                crawlFp = crawlFp + 1
 
                             driver.close()
                             driver.switch_to.window(all_h[0])
@@ -340,8 +345,8 @@ def crawl(request):
                         result = "ok"
                         json['resultCode'] = '10001'
                         json['resultDesc'] = '爬取成功'
-                        print(o)
-                        print(p)
+                        print(crawlSp)
+                        print(crawlFp)
                         print('关闭')
                         # end = time.process_time()
                         break
@@ -360,74 +365,78 @@ def crawl(request):
 def crawlRate(request):
     print('进入接口crawRate')
     json = {}
-    if request.method == "POST":
-        k_id = request.session.get('k_id')
-        try:
-            crawlPages = models.Crawl.objects.filter(k_id=k_id)
-            json['resultCode'] = '10001'
-            json['resultDesc'] = '操作成功'
-            json['data'] = len(crawlPages)
-        except:
-            json['resultCode'] = '30000'
-            json['resultDesc'] = '服务器故障'
+    json['data'] = crawlSp / (20-crawlFp)
 
     return JsonResponse(json)
 
-#调用阅读理解模块
-# from legalReadFunc import *
+# from user.legalReadFunc import *
 def readcomprehend(request):
     print('进入接口readcomprehend')
     json = {}
-#
-#     if request.method == "POST":
-#         questions = request.POST.get("questions")
-#         #print(questions)
-#         k_id = request.session.get('k_id')
-#
-#         # question_list通过questions用分号划分
-#         question_list = questions.split(";")
-#         question_id_list = []
-#         for question in question_list:
-#             q_id = models.Question.objects.create(q_name=question, k_id=k_id)
-#             question_id_list.append(q_id)
-#
-#         # 1，根据当前的关键字id查询出question列表，question的id列表，篇章列表，篇章的id列表
-#         passage_list, passage_id_list = models.Crawl.objects.filter(k_id=k_id).values_list('c_id', 'c_path')
-#         passage_list2 = []
-#         for i in range(len(passage_list)):
-#             file = open("./data/"+passage_list[i]+".txt", "r", encoding="utf8")
-#             one_passage = file.read()
-#             file.close()
-#             passage_list2.append(one_passage)
-#
-#         # 2，得到四个列表之后开始分析
-#         # 下面为四个list的例子
-#         """
-#         file = open("legalReadFunc/data/wenshu.txt", "r", encoding="utf8")
-#         data = file.read()
-#         passage_list = data.split("\n\n\n\n")
-#         passage_id_list = range(len(passage_list))
-#         question_id_list = range(len(question_list))
-#         question_list = ["罪名是什么？", "刑期有多久？", "涉案金额是多少？", "作案人数有几人？"]
-#         """
-#
-#         # 3，进行分析
-#         all_predictions = main.main(passage_list, question_list)
-#
-#         # 4，整理分析结果
-#         return_data = []
-#         for q_id in all_predictions.keys():
-#             one_return = {}
-#             position = q_id.split("_")
-#             one_return["passage_id"] = passage_id_list[int(position[0])]
-#             one_return['question_id'] = question_id_list[int(position[1])]
-#             one_return['answer'] = all_predictions[q_id]
-#             return_data.append(one_return)
-#
-#         #print (return_data)
-#
-    json['resultCode'] = '10001'
-    json['resultDesc'] = '操作成功'
+
+    # if request.method == "POST":
+    #     questions = request.POST.get("questions")
+    #     #print(questions)
+    #     k_id = request.session.get('k_id')
+    #
+    #     # question_list通过questions用分号划分
+    #     question_list = questions.split(";")
+    #
+    #     for question in question_list:
+    #         q_id = models.Question.objects.create(q_name=question, k_id=k_id)
+    #         #question_id_list.append(q_id)
+    #
+    #     #查询question_id
+    #     question_id_list2 = models.Question.objects.filter(k_id=k_id).values_list('q_id')
+    #     #print ("question_id_list2:", question_id_list2)
+    #     question_id_list = [one_id[0] for one_id in question_id_list2]
+    #
+    #     # 1，根据当前的关键字id查询出question列表，question的id列表，篇章列表，篇章的id列表
+    #    # passage_list, passage_id_list = models.Crawl.objects.filter(k_id=k_id).values_list('c_id', 'c_path')
+    #     all_passage_list= models.Crawl.objects.filter(k_id=k_id).values_list('c_id', 'c_path')
+    #     passage_list = [];  passage_id_list = []
+    #     for one_passage_list in all_passage_list:
+    #         passage_id_list.append(one_passage_list[0])
+    #         passage_list.append(one_passage_list[1])
+    #     #print ("查询结束")
+    #
+    #     passage_list2 = []
+    #     for i in range(len(passage_list)):
+    #         file = open("./data/"+passage_list[i]+".txt", "r")#, encoding="gbk"
+    #         one_passage = file.read()
+    #         file.close()
+    #         passage_list2.append(one_passage)
+    #     #print (passage_list2[0])
+    #     #print ("成功")
+    #
+    #     # 2，得到四个列表之后开始分析
+    #     # 下面为四个list的例子
+    #     """
+    #     file = open("legalReadFunc/data/wenshu.txt", "r", encoding="utf8")
+    #     data = file.read()
+    #     passage_list = data.split("\n\n\n\n")
+    #     passage_id_list = range(len(passage_list))
+    #     question_id_list = range(len(question_list))
+    #     question_list = ["罪名是什么？", "刑期有多久？", "涉案金额是多少？", "作案人数有几人？"]
+    #     """
+    #
+    #     # 3，进行分析
+    #     all_predictions = main.main2(passage_list, question_list)
+    #
+    #     # 4，整理分析结果
+    #     return_data = []
+    #     for q_id in all_predictions.keys():
+    #         one_return = {}
+    #         position = q_id.split("_")
+    #         one_return["passage_id"] = passage_id_list[int(position[0])]
+    #         one_return['question_id'] = question_id_list[int(position[1])]
+    #         one_return['answer'] = all_predictions[q_id]
+    #         return_data.append(one_return)
+    #
+    #     #print (return_data)
+    #
+    # json['resultCode'] = '10001'
+    # json['resultDesc'] = '操作成功'
     # json['data'] = return_data
 
     return JsonResponse(json)
