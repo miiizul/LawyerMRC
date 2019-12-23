@@ -5,17 +5,59 @@ from django.shortcuts import HttpResponse
 from django.http.response import JsonResponse
 from user import models
 
-
 # Create your views here.
+def register(request):
+    print('进入接口register')
+    json = {}
+    if request.method == 'POST':
+        name = request.POST.get('name').strip()
+        phone = request.POST.get('phone').strip()
+        email = request.POST.get('email').strip()
+        password = request.POST.get('password').strip()
+        checkpwd = request.POST.get('checkpwd').strip()
+
+        if name == '' or phone == '' or email == '' or password == '' or checkpwd == '':
+            json['resultCode'] = '20001'
+            json['resultDesc'] = '参数不全'
+        else:
+            try:
+                user = models.User.objects.get(u_phone=phone)
+                json['resultCode'] = '10002'
+                json['resultDesc'] = '该手机号已被注册'
+            except:
+                try:
+                    user = models.User.objects.get(u_email=email)
+                    json['resultCode'] = '10003'
+                    json['resultDesc'] = '该邮箱已被注册'
+                except:
+                    phoneRe = re.match(r'^1[35678]\d{9}$', phone)
+                    emailRe = re.match(r'^[0-9a-zA-Z_]{0,19}@[0-9a-zA-Z]{1,13}\.[com,cn,net]{1,3}$', email)
+                    if phoneRe and emailRe and len(password) >= 6:
+                        if password == checkpwd:
+                            try:
+                                user = models.User.objects.create(u_name=name, u_password=password, u_phone=phone, u_email=email)
+                                json['resultCode'] = '10001'
+                                json['resultDesc'] = '注册成功'
+                            except:
+                                json['resultCode'] = '30000'
+                                json['resultDesc'] = '服务器故障'
+                        else:
+                            json['resultCode'] = '20002'
+                            json['resultDesc'] = '两次密码不一致'
+                    else:
+                        json['resultCode'] = '10005'
+                        json['resultDesc'] = '手机号或邮箱格式错误'
+
+    return JsonResponse(json)
 
 def login(request):
     print('进入接口login')
     json = {}
     if request.method == "POST":
-        username = request.POST.get("username")
-        password = request.POST.get("password")
+        username = request.POST.get("username").strip()
+        password = request.POST.get("password").strip()
 
-        if username.strip() == '' or password.strip() == '':
+        if username == '' or password == '':
             json['resultCode'] = '20000'
             json['resultDesc'] = '参数不全'
         else:
@@ -55,6 +97,94 @@ def login(request):
 
     return JsonResponse(json)
 
+def updatePwd(request):
+    print('进入接口updatePwd')
+    json = {}
+    if request.method == "POST":
+        oldpwd = request.POST.get("oldpwd").strip()
+        newpwd = request.POST.get("newpwd").strip()
+        checkpwd = request.POST.get("checkpwd").strip()
+
+        if oldpwd == '' or newpwd == '' or checkpwd == '':
+            json['resultCode'] = '20000'
+            json['resultDesc'] = '参数不全'
+        else:
+            u_id = request.session.get('u_id')
+            try:
+                user = models.User.objects.get(u_id=u_id)
+                if user.u_password == oldpwd:
+                    if len(newpwd) >= 6:
+                        if newpwd == checkpwd:
+                            user.u_password = newpwd
+                            user.save()
+                            json['resultCode'] = '10001'
+                            json['resultDesc'] = '修改成功'
+                        else:
+                            json['resultCode'] = '10007'
+                            json['resultDesc'] = '两次新密码不一致'
+                    else:
+                        json['resultCode'] = '10006'
+                        json['resultDesc'] = '新密码格式错误'
+                else:
+                    json['resultCode'] = '10005'
+                    json['resultDesc'] = '原密码错误'
+            except:
+                json['resultCode'] = '30000'
+                json['resultDesc'] = '服务器故障'
+
+    return JsonResponse(json)
+
+def updateInfo(request):
+    print('进入接口updateInfo')
+    json = {}
+    if request.method == "POST":
+        name = request.POST.get("name").strip()
+        phone = request.POST.get("phone").strip()
+        email = request.POST.get("email").strip()
+
+        if name == '' or phone == '' or email == '':
+            json['resultCode'] = '20000'
+            json['resultDesc'] = '参数不全'
+        else:
+            u_id = request.session.get('u_id')
+            try:
+                user = models.User.objects.get(u_id=u_id)
+                phoneNotUsed = False
+                emailNotUsed = False
+
+                if user.u_phone != phone:
+                    try:
+                        other_user = models.User.objects.get(u_phone=phone)
+                        json['resultCode'] = '10002'
+                        json['resultDesc'] = '新手机号已被注册'
+                    except:
+                        phoneNotUsed = True
+
+                if user.u_email != email:
+                    try:
+                        other_user = models.User.objects.get(u_email=email)
+                        json['resultCode'] = '10003'
+                        json['resultDesc'] = '新邮箱已被注册'
+                    except:
+                        emailNotUsed = True
+
+                if phoneNotUsed and emailNotUsed:
+                    phoneRe = re.match(r'^1[35678]\d{9}$', phone)
+                    emailRe = re.match(r'^[0-9a-zA-Z_]{0,19}@[0-9a-zA-Z]{1,13}\.[com,cn,net]{1,3}$', email)
+                    if phoneRe and emailRe:
+                        user.u_phone = phone
+                        user.u_email = email
+                        user.u_name = name
+                        json['resultCode'] = '10001'
+                        json['resultDesc'] = '修改成功'
+                    else:
+                        json['resultCode'] = '10005'
+                        json['resultDesc'] = '手机号或邮箱格式错误'
+            except:
+                json['resultCode'] = '30000'
+                json['resultDesc'] = '服务器故障'
+
+    return JsonResponse(json)
 
 def crawl(request):
     print('进入接口crawl')
@@ -73,6 +203,7 @@ def crawl(request):
                 keyword_obj = models.Keyword.objects.create(k_keyword=keyword)
 
             print(keyword_obj.k_id)
+            request.session['k_id'] = keyword_obj.k_id
 
             crawl_obj = models.Crawl.objects.filter(k_id=keyword_obj.k_id)
             if len(crawl_obj) > 0:
@@ -221,7 +352,6 @@ def crawl(request):
         # UserModel.objects.filter().delete()  # 删
 
     return JsonResponse(json)
-
 
 #调用阅读理解模块
 def readcomprehend(request):
