@@ -46,7 +46,7 @@ def register(request):
                             json['resultDesc'] = '两次密码不一致'
                     else:
                         json['resultCode'] = '10005'
-                        json['resultDesc'] = '手机号或邮箱格式错误'
+                        json['resultDesc'] = '参数格式错误'
 
     return JsonResponse(json)
 
@@ -147,8 +147,11 @@ def updateInfo(request):
             json['resultDesc'] = '参数不全'
         else:
             u_id = request.session.get('u_id')
+            json['resultCode'] = '10001'
+            json['resultDesc'] = '修改成功'
             try:
                 user = models.User.objects.get(u_id=u_id)
+
                 phoneNotUsed = False
                 emailNotUsed = False
 
@@ -168,21 +171,22 @@ def updateInfo(request):
                     except:
                         emailNotUsed = True
 
-                if phoneNotUsed and emailNotUsed:
+                if phoneNotUsed or emailNotUsed:
                     phoneRe = re.match(r'^1[35678]\d{9}$', phone)
                     emailRe = re.match(r'^[0-9a-zA-Z_]{0,19}@[0-9a-zA-Z]{1,13}\.[com,cn,net]{1,3}$', email)
-                    if phoneRe and emailRe:
-                        user.u_phone = phone
-                        user.u_email = email
-                        user.u_name = name
-                        json['resultCode'] = '10001'
-                        json['resultDesc'] = '修改成功'
-                    else:
+                    if not phoneRe or not emailRe:
                         json['resultCode'] = '10005'
                         json['resultDesc'] = '手机号或邮箱格式错误'
+
             except:
                 json['resultCode'] = '30000'
                 json['resultDesc'] = '服务器故障'
+
+            if json['resultCode'] == '10001':
+                user.u_name = name
+                user.u_phone = phone
+                user.u_email = email
+                user.save()
 
     return JsonResponse(json)
 
@@ -370,64 +374,63 @@ def crawlRate(request):
     return JsonResponse(json)
 
 #调用阅读理解模块
-from legalReadFunc import *
+# from legalReadFunc import *
 def readcomprehend(request):
     print('进入接口readcomprehend')
     json = {}
-
-    if request.method == "POST":
-        questions = request.POST.get("questions")
-        #print(questions)
-        k_id = request.session.get('k_id')
-
-        # question_list通过questions用分号划分
-        question_list = questions.split(";")
-        question_id_list = []
-        for question in question_list:
-            q_id = models.Question.objects.create(q_name=question, k_id=k_id)
-            question_id_list.append(q_id)
-
-        # 1，根据当前的关键字id查询出question列表，question的id列表，篇章列表，篇章的id列表
-        passage_list, passage_id_list = models.Crawl.objects.filter(k_id=k_id).values_list('c_id', 'c_path')
-        passage_list2 = []
-        for i in range(len(passage_list)):
-            file = open("./data/"+passage_list[i]+".txt", "r", encoding="utf8")
-            one_passage = file.read()
-            file.close()
-            passage_list2.append(one_passage)
-
-        # 2，得到四个列表之后开始分析
-        # 下面为四个list的例子
-        """
-        file = open("legalReadFunc/data/wenshu.txt", "r", encoding="utf8")
-        data = file.read()
-        passage_list = data.split("\n\n\n\n")
-        passage_id_list = range(len(passage_list))
-        question_id_list = range(len(question_list))
-        question_list = ["罪名是什么？", "刑期有多久？", "涉案金额是多少？", "作案人数有几人？"]
-        """
-
-        # 3，进行分析
-        all_predictions = main.main(passage_list, question_list)
-
-        # 4，整理分析结果
-        return_data = []
-        for q_id in all_predictions.keys():
-            one_return = {}
-            position = q_id.split("_")
-            one_return["passage_id"] = passage_id_list[int(position[0])]
-            one_return['question_id'] = question_id_list[int(position[1])]
-            one_return['answer'] = all_predictions[q_id]
-            return_data.append(one_return)
-
-        #print (return_data)
-
+#
+#     if request.method == "POST":
+#         questions = request.POST.get("questions")
+#         #print(questions)
+#         k_id = request.session.get('k_id')
+#
+#         # question_list通过questions用分号划分
+#         question_list = questions.split(";")
+#         question_id_list = []
+#         for question in question_list:
+#             q_id = models.Question.objects.create(q_name=question, k_id=k_id)
+#             question_id_list.append(q_id)
+#
+#         # 1，根据当前的关键字id查询出question列表，question的id列表，篇章列表，篇章的id列表
+#         passage_list, passage_id_list = models.Crawl.objects.filter(k_id=k_id).values_list('c_id', 'c_path')
+#         passage_list2 = []
+#         for i in range(len(passage_list)):
+#             file = open("./data/"+passage_list[i]+".txt", "r", encoding="utf8")
+#             one_passage = file.read()
+#             file.close()
+#             passage_list2.append(one_passage)
+#
+#         # 2，得到四个列表之后开始分析
+#         # 下面为四个list的例子
+#         """
+#         file = open("legalReadFunc/data/wenshu.txt", "r", encoding="utf8")
+#         data = file.read()
+#         passage_list = data.split("\n\n\n\n")
+#         passage_id_list = range(len(passage_list))
+#         question_id_list = range(len(question_list))
+#         question_list = ["罪名是什么？", "刑期有多久？", "涉案金额是多少？", "作案人数有几人？"]
+#         """
+#
+#         # 3，进行分析
+#         all_predictions = main.main(passage_list, question_list)
+#
+#         # 4，整理分析结果
+#         return_data = []
+#         for q_id in all_predictions.keys():
+#             one_return = {}
+#             position = q_id.split("_")
+#             one_return["passage_id"] = passage_id_list[int(position[0])]
+#             one_return['question_id'] = question_id_list[int(position[1])]
+#             one_return['answer'] = all_predictions[q_id]
+#             return_data.append(one_return)
+#
+#         #print (return_data)
+#
     json['resultCode'] = '10001'
     json['resultDesc'] = '操作成功'
-    json['data'] = return_data
+    # json['data'] = return_data
 
     return JsonResponse(json)
-
 
 def dataAnalysis(request):
     print('进入接口dataAnalysis')
@@ -447,6 +450,7 @@ def dataAnalysis(request):
                         q_id = models.Question.objects.get(q_name=question, k_id=k_id)
                         try:
                             answers = models.Answer.objects.filter(q_id=q_id, k_id=k_id).values_list('a_answer')
+                            asw = models.Answer.objects.filter().va
                             answer_classes = list(set(answers))
                             if len(answer_classes) > 10:
                                 answer_freq = {ans: answers.count(ans) for ans in answer_classes[:10]}
@@ -468,6 +472,12 @@ def dataAnalysis(request):
         else:
             json['resultCode'] = '30000'
             json['resultDesc'] = '服务器故障'
+
+    return JsonResponse(json)
+
+def recommendkeyword(request):
+    print('进入接口recommendkeyword')
+    json = {}
 
     return JsonResponse(json)
 

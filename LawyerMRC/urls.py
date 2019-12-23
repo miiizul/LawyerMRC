@@ -25,7 +25,10 @@ urlpatterns = [
     path('chartsPage', pageView.chartsPage),
     path('queryPage', pageView.queryPage),
     path('tablesPage', pageView.tablesPage),
+    path('user/register', userView.register),
     path('user/login', userView.login),
+    path('user/updatePwd', userView.updatePwd),
+    path('user/updateInfo', userView.updateInfo),
     path('user/crawl', userView.crawl),
     path('user/mrc', userView.readcomprehend)
 ]

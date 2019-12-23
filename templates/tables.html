@@ -20,7 +20,7 @@
     <!-- Custom stylesheet - for your changes-->
     <link rel="stylesheet" href="/static/css/custom.css">
       <!--引入css-->
-    <link href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css" rel="stylesheet">
+    <link ref="stylesheet" href="/static/css/jquery.dataTables.min.css">
     <!-- Favicon-->
     <link rel="shortcut icon" href="/static/img/favicon.png">
     <!-- Tweaks for older IEs--><!--[if lt IE 9]>
@@ -101,33 +101,9 @@
                   <div class="card-body">
                     <table class="table card-text" id="QA_table">
                         <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Position</th>
-                                <th>Office</th>
-                                <th>Age</th>
-                                <th>Start date</th>
-                                <th>Salary</th>
-                            </tr>
                         </thead>
 
                         <tbody>
-                            <tr>
-                                <td>Tiger Nixon</td>
-                                <td>System Architect</td>
-                                <td>Edinburgh</td>
-                                <td>61</td>
-                                <td>2011/04/25</td>
-                                <td>$320,800</td>
-                            </tr>
-                            <tr>
-                                <td>Garrett Winters</td>
-                                <td>Accountant</td>
-                                <td>Tokyo</td>
-                                <td>63</td>
-                                <td>2011/07/25</td>
-                                <td>$170,750</td>
-                            </tr>
                         </tbody>
                     </table>
                   </div>
@@ -146,8 +122,8 @@
     <script src="/static/vendor/chart.js/Chart.min.js"></script>
     <script src="/static/js/js.cookie.min.js"></script>
     <script src="/static/js/front.js"></script>
-    <script src="/static/js/jquery-1.10.2.js"></script>
-    <script stc="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+{#    <script src="/static/js/jquery.js"></script>#}
+    <script src="/static/js/jquery.dataTables.min.js"></script>
     <script src="/static/js/tables.js"></script>
   </body>
 </html>
